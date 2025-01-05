@@ -16,13 +16,12 @@ const Board = () => {
   const [error, setError] = useState(false);
   const [loginCheck, setLoginCheck] = useState(false);
 
-  const checkLogin = () => {
-    if(auth.loggedIn()) {
-      setLoginCheck(true);
-    }
+  const checkLogin = (): void => {
+    const isLoggedIn = auth.loggedIn(); // Ensure auth.loggedIn() returns a boolean
+    setLoginCheck(!!isLoggedIn); // Explicitly set login state
   };
 
-  const fetchTickets = async () => {
+  const fetchTickets = async (): Promise<void> => {
     try {
       const data = await retrieveTickets();
       setTickets(data);
@@ -32,22 +31,23 @@ const Board = () => {
     }
   };
 
-  const deleteIndvTicket = async (ticketId: number) : Promise<ApiMessage> => {
+  const deleteIndvTicket = async (ticketId: number): Promise<ApiMessage> => {
     try {
       const data = await deleteTicket(ticketId);
-      fetchTickets();
+      await fetchTickets(); // Ensure tickets are refreshed after deletion
       return data;
     } catch (err) {
+      console.error('Failed to delete ticket:', err);
       return Promise.reject(err);
     }
-  }
+  };
 
   useLayoutEffect(() => {
     checkLogin();
   }, []);
 
   useEffect(() => {
-    if(loginCheck) {
+    if (loginCheck) {
       fetchTickets();
     }
   }, [loginCheck]);
@@ -58,34 +58,30 @@ const Board = () => {
 
   return (
     <>
-    {
-      !loginCheck ? (
+      {!loginCheck ? (
         <div className='login-notice'>
-          <h1>
-            Login to create & view tickets
-          </h1>
-        </div>  
+          <h1>Login to create & view tickets</h1>
+        </div>
       ) : (
-          <div className='board'>
-            <button type='button' id='create-ticket-link'>
-              <Link to='/create' >New Ticket</Link>
-            </button>
-            <div className='board-display'>
-              {boardStates.map((status) => {
-                const filteredTickets = tickets.filter(ticket => ticket.status === status);
-                return (
-                  <Swimlane 
-                    title={status} 
-                    key={status} 
-                    tickets={filteredTickets} 
-                    deleteTicket={deleteIndvTicket}
-                  />
-                );
-              })}
-            </div>
+        <div className='board'>
+          <button type='button' id='create-ticket-link'>
+            <Link to='/create'>New Ticket</Link>
+          </button>
+          <div className='board-display'>
+            {boardStates.map((status) => {
+              const filteredTickets = tickets.filter((ticket) => ticket.status === status);
+              return (
+                <Swimlane
+                  title={status}
+                  key={status}
+                  tickets={filteredTickets}
+                  deleteTicket={deleteIndvTicket}
+                />
+              );
+            })}
           </div>
-        )
-    }
+        </div>
+      )}
     </>
   );
 };
